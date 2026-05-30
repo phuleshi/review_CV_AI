@@ -14,3 +14,5 @@ Minimal scaffold for a CV review product.
 - No database is wired up yet.
 - `frontend/` contains a minimal Next.js screen for local testing.
 - Run it with `cd frontend`, `npm install`, then `npm run dev`.
+- `backend/` now contains a minimal NestJS + PostgreSQL scaffold.
+- Run it with `cd backend`, `npm install`, copy `.env.example` to `.env`, then `npm run start:dev`.
