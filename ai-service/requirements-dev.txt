@@ -1,0 +1,11 @@
+-r requirements.txt
+
+# ===== Testing =====
+pytest
+pytest-asyncio
+pytest-cov
+httpx            # FastAPI TestClient transport
+
+# ===== Quality =====
+ruff             # lint + format
+mypy

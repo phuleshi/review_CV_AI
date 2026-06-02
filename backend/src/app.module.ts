@@ -12,9 +12,7 @@ import { HealthModule } from "./health/health.module";
       isGlobal: true,
       envFilePath: [".env"]
     }),
-    TypeOrmModule.forRootAsync({
-      useFactory: databaseConfig
-    }),
+    TypeOrmModule.forRootAsync(databaseConfig),
     HealthModule
   ],
   controllers: [AppController],

@@ -1,0 +1,21 @@
+# ===== Core API =====
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# ===== CV Parsing =====
+pypdf            # PDF text extraction
+python-docx      # DOCX parsing
+
+# ===== LLM Layer =====
+openai
+tenacity         # retry / backoff for LLM calls
+
+# ===== HTTP / utils =====
+httpx
+python-json-logger
+
+# ===== Future RAG (kept commented until Sprint with Pinecone) =====
+# pinecone-client
+# tiktoken
