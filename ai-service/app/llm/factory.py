@@ -13,5 +13,11 @@ def get_llm_provider() -> LLMProvider:
 
         return OpenAIProvider()
 
-    # Default (Sprint 1): mock.
+    if provider == "heuristic":
+        # Sprint 1 default: grounded local stand-in returning real JSON reviews.
+        from app.llm.heuristic_provider import HeuristicLLMProvider
+
+        return HeuristicLLMProvider()
+
+    # Bare stub that returns a non-JSON string — exercises the engine's fallback path.
     return MockLLMProvider()
