@@ -20,8 +20,10 @@ class Settings(BaseSettings):
     # Security: shared secret the NestJS backend sends on internal calls.
     internal_api_key: str = "change-me"
 
-    # LLM (Sprint 1 uses "mock" — no real provider call yet)
-    llm_provider: str = "mock"
+    # LLM provider: "heuristic" (Sprint 1 default — grounded local stand-in that
+    # returns real JSON reviews), "mock" (bare stub → engine fallback path), or
+    # "openai" (real model, later sprint).
+    llm_provider: str = "heuristic"
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
     llm_timeout_seconds: int = 60

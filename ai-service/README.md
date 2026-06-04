@@ -24,9 +24,15 @@ abstractions defined in `domain/interfaces`, never the other way around.
 
 See the repo design notes for the full folder explanation and sprint plan.
 
-> **Sprint 1 status:** endpoints below run on **mock** services — no real OpenAI
-> call, no PDF/DOCX parsing, no Pinecone. The structure is wired so each mock is
-> swapped for a real implementation without touching routers or schemas.
+> **Sprint 1 status:** the **AI Review Engine** is live end-to-end
+> (`CV → prompt → LLM → validated JSON`). The default `LLM_PROVIDER=heuristic` is a
+> *grounded local stand-in* — it derives scores/feedback from signals actually in the
+> CV, so no OpenAI key is needed and nothing is hallucinated. Set `LLM_PROVIDER=openai`
+> to swap in a real model (engine, schema, and parser unchanged). PDF/DOCX parsing and
+> Pinecone/RAG remain mocked/deferred. Output is the canonical schema in
+> [docs/api_contract.md](docs/api_contract.md); scoring follows
+> [kb/scoring_rubric.md](kb/scoring_rubric.md); prompt is
+> [prompts/review_prompt_v1.md](prompts/review_prompt_v1.md).
 
 ## Run (local)
 

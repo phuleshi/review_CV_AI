@@ -13,4 +13,4 @@ async def review_cv(
     payload: ReviewCVRequest,
     service: ReviewService = Depends(get_review_service),
 ) -> ReviewCVResponse:
-    return service.review(payload)
+    return await service.review(payload)

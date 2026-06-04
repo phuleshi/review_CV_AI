@@ -70,7 +70,14 @@ h1 {
 }
 
 .result {
-  grid-template-columns: 220px 1fr 1fr;
+  grid-template-columns: 260px 1fr;
+  margin-bottom: 16px;
+}
+
+.lists {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .card,
@@ -139,6 +146,47 @@ button:hover {
   line-height: 1;
 }
 
+.scoreCard strong small {
+  font-size: 18px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.categories {
+  display: grid;
+  gap: 14px;
+}
+
+.categoryHead {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.bar {
+  height: 10px;
+  border-radius: 999px;
+  background: #eef0f4;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.error {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
 .scoreCard span,
 .scoreCard p,
 .listCard li {
@@ -160,7 +208,8 @@ li + li {
   }
 
   .grid,
-  .result {
+  .result,
+  .lists {
     grid-template-columns: 1fr;
   }
 
