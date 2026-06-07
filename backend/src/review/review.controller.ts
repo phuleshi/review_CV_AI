@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post } from "@nestjs/common";
 import { ReviewCvDto } from "./dto/review-cv.dto";
 import { ReviewService } from "./review.service";
 import { ReviewResult } from "./review.types";
@@ -11,5 +11,11 @@ export class ReviewController {
   @Post()
   reviewCv(@Body() dto: ReviewCvDto): Promise<ReviewResult> {
     return this.reviewService.review(dto);
+  }
+
+  // GET /api/review-cv/history
+  @Get("history")
+  getHistory() {
+    return this.reviewService.getHistory();
   }
 }

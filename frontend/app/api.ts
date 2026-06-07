@@ -28,3 +28,11 @@ export async function reviewCv(
 
   return (await res.json()) as ReviewResult;
 }
+
+export async function getHistory(): Promise<any[]> {
+  const res = await fetch(`${API_BASE_URL}/review-cv/history`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch history (${res.status})`);
+  }
+  return res.json();
+}

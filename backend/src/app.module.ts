@@ -6,6 +6,8 @@ import { AppService } from "./app.service";
 import { databaseConfig } from "./config/database.config";
 import { HealthModule } from "./health/health.module";
 import { ReviewModule } from "./review/review.module";
+import { UsersModule } from "./users/users.module";
+import { CvsModule } from "./cvs/cvs.module";
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { ReviewModule } from "./review/review.module";
     }),
     TypeOrmModule.forRootAsync(databaseConfig),
     HealthModule,
+    UsersModule,
+    CvsModule,
     ReviewModule
   ],
   controllers: [AppController],

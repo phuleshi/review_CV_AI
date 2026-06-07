@@ -11,6 +11,6 @@ export const databaseConfig = {
     password: configService.get<string>("DATABASE_PASSWORD", "postgres"),
     database: configService.get<string>("DATABASE_NAME", "review_cv_ai"),
     autoLoadEntities: true,
-    synchronize: false
+    synchronize: configService.get<string>("DATABASE_SYNCHRONIZE", "false") === "true"
   })
 } satisfies TypeOrmModuleAsyncOptions;
