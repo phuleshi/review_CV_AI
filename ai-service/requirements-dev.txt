@@ -5,6 +5,7 @@ pytest
 pytest-asyncio
 pytest-cov
 httpx            # FastAPI TestClient transport
+reportlab        # render PDF fixtures for parser tests
 
 # ===== Quality =====
 ruff             # lint + format

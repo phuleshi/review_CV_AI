@@ -7,13 +7,16 @@ import { databaseConfig } from "./config/database.config";
 import { HealthModule } from "./health/health.module";
 import { ReviewModule } from "./review/review.module";
 
+const databaseImports =
+  process.env.DATABASE_ENABLED === "true" ? [TypeOrmModule.forRootAsync(databaseConfig)] : [];
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [".env"]
     }),
-    TypeOrmModule.forRootAsync(databaseConfig),
+    ...databaseImports,
     HealthModule,
     ReviewModule
   ],

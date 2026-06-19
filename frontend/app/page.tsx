@@ -126,7 +126,7 @@ export default function HomePage() {
 
           <section className="lists">
             <div className="listCard">
-              <h3>✅ Strengths</h3>
+              <h3>Strengths</h3>
               <ul>
                 {result.strengths.map((item, i) => (
                   <li key={i}>{item}</li>
@@ -134,7 +134,7 @@ export default function HomePage() {
               </ul>
             </div>
             <div className="listCard">
-              <h3>⚠️ Weaknesses</h3>
+              <h3>Weaknesses</h3>
               <ul>
                 {result.weaknesses.map((item, i) => (
                   <li key={i}>{item}</li>
@@ -142,7 +142,7 @@ export default function HomePage() {
               </ul>
             </div>
             <div className="listCard">
-              <h3>💡 Suggestions</h3>
+              <h3>Suggestions</h3>
               <ul>
                 {result.suggestions.map((item, i) => (
                   <li key={i}>{item}</li>
@@ -150,6 +150,51 @@ export default function HomePage() {
               </ul>
             </div>
           </section>
+
+          {result.jd_match && (
+            <section className="jdMatch card">
+              <div>
+                <span className="sectionLabel">JD match</span>
+                <strong style={{ color: scoreColor(result.jd_match.match_score / 100) }}>
+                  {result.jd_match.match_score}
+                  <small>/100</small>
+                </strong>
+                <p>{result.jd_match.notes}</p>
+              </div>
+
+              <div className="skillColumns">
+                <div>
+                  <h3>Matched skills</h3>
+                  {result.jd_match.matched_skills.length ? (
+                    <div className="pills">
+                      {result.jd_match.matched_skills.map((skill) => (
+                        <span className="pill positive" key={skill}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="muted">Chưa tìm thấy skill trùng với JD.</p>
+                  )}
+                </div>
+
+                <div>
+                  <h3>Missing skills</h3>
+                  {result.jd_match.missing_skills.length ? (
+                    <div className="pills">
+                      {result.jd_match.missing_skills.map((skill) => (
+                        <span className="pill warning" key={skill}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="muted">Không có skill thiếu nổi bật.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
         </>
       )}
     </main>

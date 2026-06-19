@@ -78,6 +78,7 @@ h1 {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 16px;
 }
 
 .card,
@@ -146,10 +147,61 @@ button:hover {
   line-height: 1;
 }
 
-.scoreCard strong small {
+.scoreCard strong small,
+.jdMatch strong small {
   font-size: 18px;
   color: var(--muted);
   font-weight: 700;
+}
+
+.jdMatch {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.sectionLabel {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.jdMatch strong {
+  display: block;
+  margin: 10px 0;
+  font-size: 36px;
+  line-height: 1;
+}
+
+.skillColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pill.positive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.pill.warning {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .categories {
@@ -189,7 +241,9 @@ button:hover {
 
 .scoreCard span,
 .scoreCard p,
-.listCard li {
+.listCard li,
+.jdMatch p,
+.muted {
   color: var(--muted);
 }
 
@@ -209,7 +263,9 @@ li + li {
 
   .grid,
   .result,
-  .lists {
+  .lists,
+  .jdMatch,
+  .skillColumns {
     grid-template-columns: 1fr;
   }
 
