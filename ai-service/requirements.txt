@@ -3,6 +3,7 @@ fastapi
 uvicorn[standard]
 pydantic
 pydantic-settings
+python-multipart  # multipart/form-data for CV file uploads
 
 # ===== CV Parsing =====
 pypdf            # PDF text extraction

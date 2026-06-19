@@ -18,10 +18,12 @@ export async function reviewCv(
   if (!res.ok) {
     let detail = `Request failed (${res.status})`;
     try {
-      const body = await res.json();
+      const body = await res.clone().json();
       if (body?.message) detail = Array.isArray(body.message) ? body.message.join(", ") : body.message;
+      if (body?.detail) detail = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail);
     } catch {
-      // non-JSON error body — keep the default message
+      const text = await res.text().catch(() => "");
+      if (text) detail = text;
     }
     throw new Error(detail);
   }

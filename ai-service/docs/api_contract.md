@@ -99,9 +99,12 @@ forwards the same body and returns the same response.
 
 ---
 
-## 2. Parse a CV (supporting endpoint)
+## 2. Parse a CV
 
-### `POST /api/v1/parse-cv`  (AI Service)
+Two entry points produce the **same** unified `sections` shape: one for raw text,
+one for an uploaded PDF/DOCX file.
+
+### `POST /api/v1/parse-cv`  (raw text)
 
 **Request**
 
@@ -109,27 +112,97 @@ forwards the same body and returns the same response.
 { "raw_text": "string — required, non-empty" }
 ```
 
-**Response `200`**
+### `POST /api/v1/parse-cv-file`  (file upload)
+
+`multipart/form-data` with a single `file` field (`.pdf` or `.docx`). The service
+extracts text (pypdf / python-docx, routed by extension or MIME type) then runs
+the same normalizer.
+
+**Response `200` (both endpoints) — unified CV JSON**
 
 ```json
 {
   "sections": {
-    "personal_info": {},
-    "education": [],
-    "experience": [],
-    "skills": [],
-    "projects": [],
-    "certifications": []
+    "personal_info": {
+      "name": "string",
+      "email": "string",
+      "phone": "string",
+      "links": ["string"]
+    },
+    "education": [
+      { "degree": "string|null", "institution": "string|null", "period": "string|null" }
+    ],
+    "experience": [
+      {
+        "title": "string|null",
+        "company": "string|null",
+        "period": "string|null",
+        "highlights": ["string"]
+      }
+    ],
+    "projects": [
+      { "name": "string|null", "description": "string|null", "tech": ["string"] }
+    ],
+    "skills": ["string"],
+    "certifications": ["string"]
   }
 }
 ```
 
-> Sprint 1: parsing is mocked (loosely-typed lists). Section list shape is stable;
-> item shapes will be tightened in a later sprint.
+| Field | Type | Notes |
+|-------|------|-------|
+| `personal_info` | object | Keys present only when detected (`name`, `email`, `phone`, `links`). |
+| `education` | object[] | Degree / institution / period per entry. |
+| `experience` | object[] | Role header parsed into title/company/period + bullet `highlights`. |
+| `projects` | object[] | `tech` extracted from parenthesised tech lists. |
+| `skills` | string[] | De-duplicated token list (compound tokens like `CI/CD` preserved). |
+| `certifications` | string[] | One entry per listed certification. |
+
+> Parsing is deterministic and rule-based (no LLM): fast, free, reproducible.
+> A scanned/image-only PDF (no extractable text) returns `422`.
 
 ---
 
-## 3. Health
+## 3. Match a CV against a JD
+
+### `POST /api/v1/match-jd`  (AI Service)
+
+Deterministic skill matching: **Skill Extraction → Gap Analysis → Match Score**.
+Standalone counterpart to the review engine's qualitative `jd_match` block.
+
+**Request**
+
+```json
+{
+  "cv_text": "string — required, non-empty",
+  "job_description": "string — required, non-empty"
+}
+```
+
+**Response `200`**
+
+```json
+{
+  "match_score": 78,
+  "matched_skills": ["string"],
+  "missing_skills": ["string"],
+  "recommendations": ["string"]
+}
+```
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `match_score` | int 0–100 | Share of JD-required skills the CV demonstrates. |
+| `matched_skills` | string[] | Canonical skills found in both CV and JD. |
+| `missing_skills` | string[] | JD skills absent from the CV. |
+| `recommendations` | string[] | Actionable guidance derived from the gaps. |
+
+> Skill resolution is alias-aware (`JS`→JavaScript, `k8s`→Kubernetes,
+> `postgres`→PostgreSQL). Source of truth: `app/services/jd_matching/skill_taxonomy.py`.
+
+---
+
+## 4. Health
 
 ### `GET /health`  (AI Service)
 
@@ -139,7 +212,7 @@ forwards the same body and returns the same response.
 
 ---
 
-## 4. Errors
+## 5. Errors
 
 All errors use a consistent envelope (mapped from `AIServiceError`).
 
@@ -159,14 +232,14 @@ All errors use a consistent envelope (mapped from `AIServiceError`).
 
 ---
 
-## 5. Versioning rules
+## 6. Versioning rules
 
 1. Additive, backward-compatible changes (new optional field) → keep `schema_version` `"1.0"`.
 2. Breaking changes (rename/remove field, change score ranges) → bump to `"2.0"` and
    `prompts/review_prompt_v2.md`; keep schema and prompt versions in lockstep.
 3. FE/BE should read `schema_version` and degrade gracefully on unknown versions.
 
-## 6. Contract ownership
+## 7. Contract ownership
 
 | Layer | Responsibility |
 |-------|----------------|

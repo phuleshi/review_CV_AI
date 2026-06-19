@@ -9,13 +9,16 @@ import { ReviewModule } from "./review/review.module";
 import { UsersModule } from "./users/users.module";
 import { CvsModule } from "./cvs/cvs.module";
 
+const databaseImports =
+  process.env.DATABASE_ENABLED === "true" ? [TypeOrmModule.forRootAsync(databaseConfig)] : [];
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [".env"]
     }),
-    TypeOrmModule.forRootAsync(databaseConfig),
+    ...databaseImports,
     HealthModule,
     UsersModule,
     CvsModule,
