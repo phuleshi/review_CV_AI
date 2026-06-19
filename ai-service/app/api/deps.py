@@ -4,13 +4,13 @@ from app.services.cv_parsing.parser_service import ParserService
 from app.services.jd_matching.jd_matching_service import JDMatchingService
 
 
-def get_parser_service() -> ParserService:
+async def get_parser_service() -> ParserService:
     return ParserService()
 
 
-def get_review_service() -> ReviewService:
+async def get_review_service() -> ReviewService:
     return ReviewService()
 
 
-def get_jd_matching_service() -> JDMatchingService:
+async def get_jd_matching_service() -> JDMatchingService:
     return JDMatchingService()

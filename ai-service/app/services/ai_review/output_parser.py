@@ -61,45 +61,98 @@ def _clamp(value: object, lo: int, hi: int) -> int:
         return lo
 
 
+def _first(data: dict, *keys: str, default: object = None) -> object:
+    for key in keys:
+        if key in data:
+            return data[key]
+    return default
+
+
+def _normalize_key(value: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", value.lower())
+
+
+def _coerce_str_list(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        # Some providers return newline or comma separated prose instead of arrays.
+        parts = re.split(r"\n|;|,", value)
+        return [part.strip(" -\t") for part in parts if part.strip(" -\t")]
+    if not isinstance(value, list):
+        return []
+    return [str(item).strip() for item in value if str(item).strip()]
+
+
+def _normalize_scores(data: dict) -> dict[str, int]:
+    score_aliases = (
+        "category_scores",
+        "categoryScores",
+        "scores",
+        "score_breakdown",
+        "scoreBreakdown",
+    )
+    raw_scores = _first(data, *score_aliases, default={})
+    if not isinstance(raw_scores, dict):
+        raise ReviewParseError("category_scores missing or not an object")
+
+    score_key_map = {_normalize_key(key): key for key in raw_scores}
+    aliases = {
+        "structure": ("structure", "format", "formatting", "layout", "readability"),
+        "skills": ("skills", "technicalskills", "skillmatch"),
+        "experience": ("experience", "workexperience", "employment", "impact"),
+        "projects": ("projects", "project", "portfolio"),
+        "ats": ("ats", "atscompatibility", "keywords", "keywordmatch"),
+    }
+
+    scores: dict[str, int] = {}
+    for canonical in CATEGORY_NAMES:
+        value = raw_scores.get(canonical)
+        if value is None:
+            for alias in aliases[canonical]:
+                actual_key = score_key_map.get(_normalize_key(alias))
+                if actual_key is not None:
+                    value = raw_scores[actual_key]
+                    break
+        scores[canonical] = _clamp(value, 0, CATEGORY_MAX)
+    return scores
+
+
+def _normalize_jd_match(data: dict) -> JDMatch | None:
+    raw = _first(data, "jd_match", "jdMatch", "job_match", "jobMatch", "match", default=None)
+    if not isinstance(raw, dict):
+        return None
+
+    return JDMatch(
+        match_score=_clamp(_first(raw, "match_score", "matchScore", "score"), 0, 100),
+        matched_skills=_coerce_str_list(_first(raw, "matched_skills", "matchedSkills")),
+        missing_skills=_coerce_str_list(_first(raw, "missing_skills", "missingSkills")),
+        notes=str(_first(raw, "notes", "summary", "rationale", default="") or "").strip(),
+    )
+
+
 def parse_review_output(raw: str, *, jd_provided: bool) -> ReviewCVResponse:
     """Turn raw LLM text into a validated, internally-consistent ReviewCVResponse."""
     data = _extract_json_object(raw)
     if not isinstance(data, dict):
         raise ReviewParseError("LLM output is not a JSON object")
 
-    raw_scores = data.get("category_scores") or {}
-    if not isinstance(raw_scores, dict):
-        raise ReviewParseError("category_scores missing or not an object")
-
     # Clamp each category to 0-CATEGORY_MAX; recompute overall as the sum so the
     # total is always consistent regardless of the model's arithmetic.
-    scores = {name: _clamp(raw_scores.get(name), 0, CATEGORY_MAX) for name in CATEGORY_NAMES}
+    scores = _normalize_scores(data)
     overall = sum(scores.values())
 
-    def _str_list(key: str) -> list[str]:
-        items = data.get(key) or []
-        if not isinstance(items, list):
-            return []
-        return [str(x).strip() for x in items if str(x).strip()]
-
-    jd_match = None
-    if jd_provided and isinstance(data.get("jd_match"), dict):
-        jm = data["jd_match"]
-        jd_match = JDMatch(
-            match_score=_clamp(jm.get("match_score"), 0, 100),
-            matched_skills=[str(x) for x in (jm.get("matched_skills") or []) if str(x).strip()],
-            missing_skills=[str(x) for x in (jm.get("missing_skills") or []) if str(x).strip()],
-            notes=str(jm.get("notes") or ""),
-        )
+    jd_match = _normalize_jd_match(data) if jd_provided else None
 
     try:
         return ReviewCVResponse(
             overall_score=overall,
             category_scores=scores,  # type: ignore[arg-type]
-            strengths=_str_list("strengths"),
-            weaknesses=_str_list("weaknesses"),
-            suggestions=_str_list("suggestions"),
-            summary=str(data.get("summary") or "").strip() or "No summary provided.",
+            strengths=_coerce_str_list(_first(data, "strengths", "pros")),
+            weaknesses=_coerce_str_list(_first(data, "weaknesses", "cons", "issues")),
+            suggestions=_coerce_str_list(_first(data, "suggestions", "recommendations", "actions")),
+            summary=str(_first(data, "summary", "overall_summary", "overallSummary") or "").strip()
+            or "No summary provided.",
             jd_match=jd_match,
         )
     except ValidationError as exc:

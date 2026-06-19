@@ -1,4 +1,4 @@
-        """Unit tests for the heuristic CVNormalizer (text -> unified CV JSON)."""
+"""Unit tests for the heuristic CVNormalizer (text -> unified CV JSON)."""
 import pytest
 
 from app.schemas.cv_schema import CVSections

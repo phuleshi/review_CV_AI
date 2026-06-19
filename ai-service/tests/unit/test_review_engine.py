@@ -19,6 +19,11 @@ def _engine() -> ReviewService:
     return ReviewService(llm=HeuristicLLMProvider())
 
 
+class NoResponseLLMProvider:
+    async def complete(self, prompt: str, *, temperature: float = 0.2) -> str:
+        raise TimeoutError("provider timed out")
+
+
 def _assert_valid(resp: ReviewCVResponse) -> None:
     assert resp.schema_version == "1.0"
     cats = resp.category_scores.model_dump()
@@ -30,6 +35,17 @@ def _assert_valid(resp: ReviewCVResponse) -> None:
     assert 0 <= resp.overall_score <= 100
     assert resp.summary
     assert resp.strengths and resp.weaknesses and resp.suggestions
+
+
+def test_request_normalizes_backend_json_aliases():
+    request = ReviewCVRequest.model_validate(
+        {
+            "cvText": "  React developer CV  ",
+            "jobDescription": "  React TypeScript JD  ",
+        }
+    )
+    assert request.cv_text == "React developer CV"
+    assert request.job_description == "React TypeScript JD"
 
 
 @pytest.mark.parametrize("name", list(SAMPLE_CVS))
@@ -71,6 +87,12 @@ async def test_engine_falls_back_on_bad_llm_output():
     _assert_valid(resp)  # still a valid response despite unusable LLM output
 
 
+async def test_engine_falls_back_when_llm_does_not_respond():
+    eng = ReviewService(llm=NoResponseLLMProvider())
+    resp = await eng.review(ReviewCVRequest(cv_text=SAMPLE_CVS["fullstack"]))
+    _assert_valid(resp)
+
+
 async def test_empty_cv_rejected():
     from app.core.exceptions import ReviewError
 
@@ -106,6 +128,44 @@ def test_parser_populates_jd_match_when_provided():
     assert resp.jd_match is not None
     assert resp.jd_match.match_score == 80
     assert resp.jd_match.matched_skills == ["python"]
+
+
+def test_parser_normalizes_common_ai_response_variants():
+    raw = """
+    Here is the review:
+    {
+      "categoryScores": {
+        "formatting": "19",
+        "technicalSkills": 18.4,
+        "workExperience": 16,
+        "portfolio": 12,
+        "keywordMatch": 15
+      },
+      "overallScore": 1,
+      "pros": "Clear structure, Strong React experience",
+      "issues": ["Add more metrics"],
+      "recommendations": "Quantify impact; Add deployment details",
+      "overallSummary": "Strong profile.",
+      "jdMatch": {
+        "matchScore": "88",
+        "matchedSkills": "React, TypeScript",
+        "missingSkills": ["GraphQL"],
+        "rationale": "Good fit"
+      }
+    }
+    """
+    resp = parse_review_output(raw, jd_provided=True)
+    assert resp.category_scores.structure == 19
+    assert resp.category_scores.skills == 18
+    assert resp.category_scores.experience == 16
+    assert resp.category_scores.projects == 12
+    assert resp.category_scores.ats == 15
+    assert resp.overall_score == 80
+    assert resp.strengths == ["Clear structure", "Strong React experience"]
+    assert resp.suggestions == ["Quantify impact", "Add deployment details"]
+    assert resp.jd_match is not None
+    assert resp.jd_match.match_score == 88
+    assert resp.jd_match.matched_skills == ["React", "TypeScript"]
 
 
 def test_parser_raises_on_garbage():

@@ -43,6 +43,20 @@ forwards the same body and returns the same response.
 | `cv_text` | string | yes | Min length 1. Plain text extracted from the CV. |
 | `job_description` | string \| null | no | When present, `skills`/`ats` are judged against it and `jd_match` is populated (Sprint 2). |
 
+**Request normalization**
+
+The canonical Backend → AI payload is snake_case (`cv_text`, `job_description`).
+For compatibility during integration, the AI Service also accepts these aliases
+and normalizes them internally before review:
+
+| Canonical field | Accepted aliases |
+|-----------------|------------------|
+| `cv_text` | `cvText`, `cv`, `raw_text`, `rawText` |
+| `job_description` | `jobDescription`, `jd`, `job_desc`, `jobDesc` |
+
+Whitespace is trimmed server-side. Responses are always returned in the canonical
+snake_case schema below.
+
 **Response `200` — canonical AI Output Schema**
 
 ```json
@@ -77,9 +91,9 @@ forwards the same body and returns the same response.
 | `weaknesses` | string[] | Concrete issues, each tied to a category. |
 | `suggestions` | string[] | Actionable fixes, ordered by impact. |
 | `summary` | string | 2–3 sentence overall verdict. |
-| `jd_match` | object \| null | `null` unless a JD was provided (see below). Sprint 2. |
+| `jd_match` | object \| null | `null` unless a JD was provided (see below). |
 
-**`jd_match` object (Sprint 2 — JD Matching)**
+**`jd_match` object**
 
 ```json
 {
@@ -95,7 +109,11 @@ forwards the same body and returns the same response.
 | `match_score` | int 0–100 | Overall CV↔JD fit. |
 | `matched_skills` | string[] | JD skills found in the CV. |
 | `missing_skills` | string[] | JD skills absent from the CV. |
-| `notes` | string | Short rationale. |
+| `notes` | string | Short rationale and/or recommendations. |
+
+When the LLM omits `jd_match`, the AI Service fills this block using the
+deterministic JD Matching engine so Backend and Frontend can rely on the field
+being populated whenever `job_description` is non-empty.
 
 ---
 
@@ -214,19 +232,22 @@ Standalone counterpart to the review engine's qualitative `jd_match` block.
 
 ## 5. Errors
 
-All errors use a consistent envelope (mapped from `AIServiceError`).
+All handled service errors use a consistent envelope (mapped from `AIServiceError`).
 
 ```json
-{ "detail": "human-readable message" }
+{
+  "error": "human-readable message",
+  "type": "ReviewError"
+}
 ```
 
 | Status | When |
 |--------|------|
 | `422` | Validation error (e.g. empty `cv_text`/`raw_text`). |
-| `502` | Upstream LLM error the engine could not recover from. |
+| `502` | AI service dependency error that cannot be recovered. |
 | `500` | Unexpected server error. |
 
-> Resilience note: if the LLM returns malformed output, the AI Review Engine
+> Resilience note: if the LLM returns malformed output or does not respond, the AI Review Engine
 > **falls back** to a deterministic mock review and still returns `200` with a valid
 > body — clients never receive a partial or invalid schema.
 

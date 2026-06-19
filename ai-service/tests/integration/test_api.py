@@ -95,3 +95,29 @@ def test_review_cv(client):
     assert isinstance(body["suggestions"], list)
     assert body["summary"]
     assert body["jd_match"] is None
+
+
+def test_review_cv_accepts_backend_payload_aliases(client):
+    res = client.post(
+        "/api/v1/review-cv",
+        json={
+            "cvText": "  Frontend Developer with React, TypeScript and Next.js.  ",
+            "jobDescription": "React TypeScript frontend role",
+        },
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["schema_version"] == "1.0"
+    assert body["overall_score"] == sum(body["category_scores"].values())
+    assert body["jd_match"] is not None
+
+
+def test_review_cv_multiple_sample_cvs(client):
+    for name, cv_text in SAMPLE_CVS.items():
+        res = client.post("/api/v1/review-cv", json={"cv_text": cv_text})
+        assert res.status_code == 200, name
+        body = res.json()
+        assert body["schema_version"] == "1.0"
+        assert 0 <= body["overall_score"] <= 100
+        assert body["overall_score"] == sum(body["category_scores"].values())
+        assert body["summary"]

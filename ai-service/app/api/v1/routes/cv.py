@@ -3,6 +3,8 @@
   * POST /api/v1/parse-cv       — normalize raw text (JSON body).
   * POST /api/v1/parse-cv-file  — upload a PDF/DOCX and get the unified CV JSON.
 """
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, File, UploadFile
 
 from app.api.deps import get_parser_service
@@ -16,15 +18,15 @@ router = APIRouter()
 @router.post("/parse-cv", response_model=ParseCVResponse, tags=["cv"])
 async def parse_cv(
     payload: ParseCVRequest,
-    service: ParserService = Depends(get_parser_service),
+    service: Annotated[ParserService, Depends(get_parser_service)],
 ) -> ParseCVResponse:
     return service.parse(payload.raw_text)
 
 
 @router.post("/parse-cv-file", response_model=ParseCVResponse, tags=["cv"])
 async def parse_cv_file(
-    file: UploadFile = File(...),
-    service: ParserService = Depends(get_parser_service),
+    file: Annotated[UploadFile, File(...)],
+    service: Annotated[ParserService, Depends(get_parser_service)],
 ) -> ParseCVResponse:
     content = await file.read()
     if not content:

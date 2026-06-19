@@ -18,7 +18,12 @@ class CategoryScores(BaseModel):
 
     structure: int = Field(..., ge=0, le=CATEGORY_MAX, description="Layout, sections, readability")
     skills: int = Field(..., ge=0, le=CATEGORY_MAX, description="Relevance & depth of skills")
-    experience: int = Field(..., ge=0, le=CATEGORY_MAX, description="Impact & clarity of work history")
+    experience: int = Field(
+        ...,
+        ge=0,
+        le=CATEGORY_MAX,
+        description="Impact & clarity of work history",
+    )
     projects: int = Field(..., ge=0, le=CATEGORY_MAX, description="Quality & relevance of projects")
     ats: int = Field(..., ge=0, le=CATEGORY_MAX, description="ATS / keyword compatibility")
 
